@@ -1,0 +1,16 @@
+# frozen_string_literal: true
+
+require_relative 'release_ceremony/version'
+require_relative 'release_ceremony/error'
+require_relative 'release_ceremony/semver'
+require_relative 'release_ceremony/runner'
+require_relative 'release_ceremony/project'
+require_relative 'release_ceremony/command'
+require_relative 'release_ceremony/transactional_writer'
+require_relative 'release_ceremony/changelog'
+require_relative 'release_ceremony/prepare'
+require_relative 'release_ceremony/tag_inspector'
+require_relative 'release_ceremony/workflow_finder'
+require_relative 'release_ceremony/pull_request_finder'
+require_relative 'release_ceremony/publish'
+require_relative 'release_ceremony/cli'

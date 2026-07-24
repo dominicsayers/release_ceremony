@@ -1,0 +1,54 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: ruby/setup-ruby@95ef2b042f9d7a56d8268cba8559e2842e2ad01b # v1.321.0
+        with:
+          ruby-version: '4.0.6'
+          bundler-cache: true
+
+      - name: Run the tests
+        run: bundle exec rspec
+        env:
+          CI: 'true'
+
+      - name: Run static code analysis
+        run: bundle exec rubocop
+
+  release:
+    needs: verify
+    runs-on: ubuntu-latest
+    environment: release
+    permissions:
+      contents: read
+      id-token: write # for RubyGems Trusted Publishing (OIDC); no API key is stored
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: ruby/setup-ruby@95ef2b042f9d7a56d8268cba8559e2842e2ad01b # v1.321.0
+        with:
+          ruby-version: '4.0.6'
+          bundler-cache: true
+
+      - name: Check the tag matches the gem version
+        run: |
+          version="$(ruby -r./lib/release_ceremony/version -e 'print ReleaseCeremony::VERSION')"
+          if [ "v${version}" != "${GITHUB_REF_NAME}" ]; then
+            echo "Tag ${GITHUB_REF_NAME} does not match gem version v${version}" >&2
+            exit 1
+          fi
+
+      - name: Build and publish to RubyGems
+        uses: rubygems/release-gem@052cc82692552de3ef2b81fd670e41d13cba8092 # v1.4.0

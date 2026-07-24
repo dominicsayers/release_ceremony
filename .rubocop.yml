@@ -1,0 +1,62 @@
+plugins:
+  - rubocop-rspec
+
+AllCops:
+  DisplayStyleGuide: true
+  DisplayCopNames: true
+  TargetRubyVersion: 3.1
+  NewCops: enable
+
+Layout/DotPosition:
+  Description: 'Checks the position of the dot in multi-line method calls.'
+  EnforcedStyle: leading
+
+Layout/LineLength:
+  Max: 120
+  Exclude:
+    - spec/**/*
+
+Metrics/BlockLength:
+  Exclude:
+    - spec/**/*
+
+Metrics/ClassLength:
+  CountComments: false
+  Max: 200
+
+Metrics/MethodLength:
+  Max: 12
+
+Metrics/ParameterLists:
+  CountKeywordArgs: false
+
+RSpec/ExampleLength:
+  Max: 16
+
+RSpec/MessageSpies:
+  EnforcedStyle: receive
+
+RSpec/MultipleExpectations:
+  Max: 4
+
+RSpec/MultipleMemoizedHelpers:
+  Max: 8
+
+RSpec/SpecFilePathFormat:
+  CustomTransform:
+    CLI: cli
+
+Style/ClassAndModuleChildren:
+  Description: 'Checks style of children classes and modules.'
+  EnforcedStyle: nested
+
+Style/Documentation:
+  Description: 'Document classes and non-namespace modules.'
+  Enabled: false
+
+Style/ModuleFunction:
+  Description: 'Match the SonarCloud rule S7918, which prefers extend self.'
+  EnforcedStyle: extend_self
+
+Style/StringLiterals:
+  EnforcedStyle: single_quotes
