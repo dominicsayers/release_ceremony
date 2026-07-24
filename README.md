@@ -85,6 +85,27 @@ verification_commands:              # default: the four commands below
 toolchain with [mise](https://mise.jdx.dev/), for example, would use
 `mise exec -- bundle exec rspec`.
 
+## Comparison with create_github_release
+
+[`create_github_release`](https://github.com/main-branch/create_github_release)
+automates the same job — releasing a gem hosted on GitHub through a release
+branch and pull request — but makes the opposite choice at almost every step:
+
+| | `release_ceremony` | `create_github_release` |
+| --- | --- | --- |
+| Committing and pushing | You commit, push, and open the PR yourself | One command commits, tags, pushes, and opens the PR |
+| Tag timing | Tags the merge commit after the PR merges, validating it first | Tags the release branch before merging, requiring a manual fast-forward merge |
+| Changelog | Promotes your curated Keep a Changelog `Unreleased` notes | Generates release notes from the commit list |
+| Verification | Runs configurable verification commands during `prepare` | None |
+| Publishing | Tag-triggered CI publishes; `publish` watches the workflow and confirms the version on RubyGems | Manual `rake release:rubygem_push` from your machine |
+| Version | Explicit `X.Y.Z` only | Computes major/minor/patch bumps, supports pre-releases |
+| GitHub release object | Not created | Created |
+
+Choose `create_github_release` if you want the release automated away in one
+command. Choose `release_ceremony` if you want curated release notes, a
+human inspecting and merging the release pull request, publication only from
+CI, and verification at every step.
+
 ## Development
 
 ```sh
