@@ -8,6 +8,8 @@ and this project adheres to
 
 ## [Unreleased]
 
+## [1.0.0] - 2026-07-25
+
 ### Added
 
 - `release_ceremony prepare VERSION`: update the version file and changelog on
@@ -22,4 +24,5 @@ and this project adheres to
   overrides in `.release_ceremony.yml` (release file paths, verification
   commands, workflow file, default branch, and remote).
 
-[Unreleased]: https://github.com/dominicsayers/release_ceremony/compare/v0.0.0...HEAD
+[Unreleased]: https://github.com/dominicsayers/release_ceremony/compare/v1.0.0...HEAD
+[1.0.0]: https://github.com/dominicsayers/release_ceremony/compare/v0.0.0...v1.0.0
