@@ -126,6 +126,34 @@ RSpec.describe ReleaseCeremony::Runner do
     end
   end
 
+  describe 'Bundler isolation' do
+    around do |example|
+      original = ENV.fetch('BUNDLE_GEMFILE', nil)
+      ENV['BUNDLE_GEMFILE'] = '/somewhere/Gemfile'
+      example.run
+    ensure
+      original.nil? ? ENV.delete('BUNDLE_GEMFILE') : ENV['BUNDLE_GEMFILE'] = original
+    end
+
+    it 'hides the surrounding Bundler environment from captured commands' do
+      output = runner.capture(RbConfig.ruby, '-e', 'print ENV.fetch("BUNDLE_GEMFILE", "unset")')
+
+      expect(output).to eq('unset')
+    end
+
+    it 'hides the surrounding Bundler environment from passthrough commands' do
+      expect(runner.run(RbConfig.ruby, '-e', 'exit ENV.key?("BUNDLE_GEMFILE") ? 1 : 0')).to be(true)
+    end
+
+    it 'runs commands in the current environment when Bundler is not loaded' do
+      allow(runner).to receive(:bundler_loaded?).and_return(false)
+
+      output = runner.capture(RbConfig.ruby, '-e', 'print ENV.fetch("BUNDLE_GEMFILE", "unset")')
+
+      expect(output).to eq('/somewhere/Gemfile')
+    end
+  end
+
   describe 'injected collaborators' do
     it 'writes messages to the injected stdout' do
       runner.puts('normal message')

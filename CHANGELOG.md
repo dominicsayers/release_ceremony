@@ -8,6 +8,14 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Fixed
+
+- Child commands no longer inherit the ceremony's own Bundler environment.
+  Running the ceremony with `bundle exec` used to leak `RUBYOPT` and the
+  `BUNDLE_*` variables into the verification commands, so a nested
+  `bundle install` crashed with a `LoadError` in the `bundle` executable.
+  Every command now runs in an unbundled environment when Bundler is loaded.
+
 ## [1.0.0] - 2026-07-25
 
 ### Added
