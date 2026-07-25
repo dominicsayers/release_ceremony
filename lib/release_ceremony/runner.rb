@@ -16,7 +16,7 @@ module ReleaseCeremony
 
     def capture(*command)
       validate_command!(command)
-      captured_stdout, captured_stderr, status = Open3.capture3(*command)
+      captured_stdout, captured_stderr, status = unbundled { Open3.capture3(*command) }
       return captured_stdout if status.success?
 
       raise_command_error(command, captured_stderr)
@@ -26,7 +26,7 @@ module ReleaseCeremony
 
     def run(*command)
       validate_command!(command)
-      result = system(*command)
+      result = unbundled { system(*command) }
       return true if result
 
       result.nil? ? raise_spawn_error(command) : raise_command_error(command)
@@ -55,6 +55,20 @@ module ReleaseCeremony
     end
 
     private
+
+    # The ceremony normally runs under bundle exec, but its child processes
+    # must not inherit that Bundler context: a nested bundle command crashes
+    # when RUBYOPT and the BUNDLE_* variables point at the ceremony's own
+    # bundle instead of the repository being released
+    def unbundled(&)
+      return yield unless bundler_loaded?
+
+      Bundler.with_unbundled_env(&)
+    end
+
+    def bundler_loaded?
+      !defined?(Bundler).nil?
+    end
 
     def validate_command!(command)
       return if command.length > 1 && command.all?(String)
