@@ -20,17 +20,19 @@ until you type the confirmation phrase.
 ## The ceremony
 
 ```sh
-git switch -c release-v1.2.3
-release_ceremony prepare 1.2.3
+VERSION=1.2.3
+
+git switch -c "release-v$VERSION"
+release_ceremony prepare "$VERSION"
 # inspect the changes, then commit and push the branch
 # open the pull request and merge it
-release_ceremony publish 1.2.3
+release_ceremony publish "$VERSION"
 ```
 
 Publication itself happens in CI: the pushed tag triggers your release
-workflow, which should publish to RubyGems (for example with
-[Trusted Publishing](https://guides.rubygems.org/trusted-publishing/) and the
-`rubygems/release-gem` action). `publish` only tags, watches, and verifies.
+workflow, which should publish to RubyGems (see
+[Setting up Trusted Publishing](#setting-up-trusted-publishing)). `publish`
+only tags, watches, and verifies.
 
 ## Installation
 
@@ -59,6 +61,59 @@ end
 The gem name and repository URL are read from the repository's gemspec
 (`metadata['source_code_uri']`, falling back to `homepage`). Everything else
 above is a convention that `.release_ceremony.yml` can override.
+
+## Setting up Trusted Publishing
+
+`publish` never pushes to RubyGems itself; the tag-triggered workflow does,
+ideally with [Trusted Publishing](https://guides.rubygems.org/trusted-publishing/)
+and the [`rubygems/release-gem`](https://github.com/rubygems/release-gem)
+action, so that no API key exists to be stored or leaked. One-time setup:
+
+- **Existing gem**: on rubygems.org, open the gem → Trusted publishers →
+  Create, and enter the repository owner and name, the workflow filename
+  (e.g. `release.yml`), and the environment name the workflow declares
+  (e.g. `release`).
+- **New gem**: nothing is created on RubyGems manually. Instead, register a
+  [pending trusted publisher](https://rubygems.org/profile/oidc/pending_trusted_publishers)
+  (Profile → OIDC → Pending trusted publishers) with the same fields plus the
+  gem's name. The first successful push from the workflow creates the gem,
+  converts the pending publisher into a normal one, and makes you the owner.
+  Pending publishers expire 12 hours after creation, so register on the day
+  of the first release; if it lapses, just register it again.
+- **GitHub environment**: if the workflow's publish job declares
+  `environment: release`, create that environment in the repository settings
+  (Settings → Environments). Trusted Publishing only accepts tokens minted
+  from the registered environment, and you can attach protection rules such
+  as required reviewers to it.
+
+RubyGems also ships a CLI that automates the RubyGems side:
+[`gem exec configure_trusted_publisher`](https://github.com/rubygems/configure_trusted_publisher).
+
+## Re-running publish
+
+`publish` converges when reality matches expectations and stops loudly when
+it doesn't, so after most failures you can simply run it again:
+
+- Everything before the confirmation prompt is read-only validation; a
+  failure there has changed nothing.
+- Tagging is guarded: if the remote tag already exists at the merge commit,
+  tagging and pushing are skipped; if only a local tag exists, it is pushed
+  as-is. A tag that exists anywhere but points to the wrong commit aborts the
+  ceremony before the prompt — `publish` never moves or deletes a tag.
+- Watching the workflow and checking RubyGems are read-only, so a run that
+  died mid-watch or hit RubyGems index lag re-attaches to the completed
+  workflow run and re-verifies. Re-running after a fully successful publish
+  succeeds again without side effects.
+
+The exception is a failed release workflow. Re-running `publish` does not
+retry it: the tag is already on the remote, so nothing re-pushes, no new
+workflow is triggered, and watching the same failed run fails again. Re-run
+the workflow first, then re-run `publish` to watch and verify it:
+
+```sh
+gh run rerun <run-id> --failed
+release_ceremony publish "$VERSION"
+```
 
 ## Configuration
 
